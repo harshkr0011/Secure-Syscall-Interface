@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Syscall Interface</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <h1>Secure Syscall Interface</h1>
+    </header>
+    <main class="container">
+        <!-- Login Section -->
+        <section id="login-section" class="card">
+            <h2>Login</h2>
+            <form id="login-form" class="form">
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="Username" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+            <p class="link-text">New user? <a href="#" id="show-register">Register here</a></p>
+            <p id="login-response" class="response"></p>
+        </section>
+
+        <!-- Registration Section -->
+        <section id="register-section" class="card hidden">
+            <h2>Register</h2>
+            <form id="register-form" class="form">
+                <div class="input-group">
+                    <input type="text" id="reg-username" placeholder="Username" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="reg-password" placeholder="Password" required>
+                </div>
+                <div class="input-group">
+                    <select id="reg-role">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+            <p class="link-text">Already have an account? <a href="#" id="show-login">Login here</a></p>
+            <p id="register-response" class="response"></p>
+        </section>
+
+        <!-- Syscall Section -->
+        <section id="syscall-section" class="card hidden">
+            <h2>System Calls</h2>
+            <div class="user-info">
+                <p>Logged in as: <span id="user-role"></span></p>
+                <button id="logout-button" class="btn btn-danger">Logout</button>
+            </div>
+            <div id="syscall-buttons" class="button-group">
+                <button id="btn-read" onclick="makeSyscall('read_file')" class="btn btn-secondary">Read File</button>
+                <div id="write-section" class="write-section">
+                    <input type="file" id="file-input" class="file-input">
+                    <button id="btn-write" onclick="writeFile()" class="btn btn-secondary">Write File</button>
+                </div>
+                <button id="btn-delete" onclick="makeSyscall('delete_file')" class="btn btn-secondary">Delete File</button>
+            </div>
+            <div id="spinner" class="spinner hidden">Loading...</div>
+            <p id="syscall-response" class="response"></p>
+        </section>
+
+        <!-- Logs Section -->
+        <section id="logs-section" class="card">
+            <h2>Recent Logs</h2>
+            <div class="filter-group">
+                <label>Filter by User: <input type="text" id="filter-user" class="filter-input"></label>
+                <label>Filter by Syscall: <input type="text" id="filter-syscall" class="filter-input"></label>
+                <button onclick="refreshLogs()" class="btn btn-secondary">Refresh Logs</button>
+            </div>
+            <pre id="logs-output" class="logs-output">Logs will appear here after actions...</pre>
+        </section>
+    </main>
+
+    <script src="/script.js"></script>
+</body>
+</html>

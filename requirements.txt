@@ -1,0 +1,6 @@
+flask
+flask-sqlalchemy
+pyjwt
+werkzeug
+pymysql
+mysql-connector-python
