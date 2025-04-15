@@ -2,21 +2,35 @@
 let token = null;
 let userRole = null;
 
-// Show registration form
+// Load theme on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    loadSyscalls();
+});
+
+// Toggle theme
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+}
+
+// Show/hide sections
 document.getElementById('show-register').addEventListener('click', (e) => {
     e.preventDefault();
     document.getElementById('login-section').classList.add('hidden');
     document.getElementById('register-section').classList.remove('hidden');
 });
 
-// Show login form
 document.getElementById('show-login').addEventListener('click', (e) => {
     e.preventDefault();
     document.getElementById('register-section').classList.add('hidden');
     document.getElementById('login-section').classList.remove('hidden');
 });
 
-// Handle registration
+// Register
 document.getElementById('register-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('reg-username').value;
@@ -25,29 +39,31 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     const responseEl = document.getElementById('register-response');
 
     try {
-        const response = await fetch('/register', {
+        const response = await fetch('/api/register', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ username, password, role })
         });
         const data = await response.json();
+
         if (response.ok) {
-            responseEl.textContent = `User registered successfully. You can now log in.`;
+            responseEl.textContent = 'Registration successful! Please login.';
             responseEl.classList.add('success');
-            responseEl.classList.remove('error');
+            document.getElementById('register-section').classList.add('hidden');
+            document.getElementById('login-section').classList.remove('hidden');
         } else {
-            responseEl.textContent = `Error: ${data.error}`;
+            responseEl.textContent = data.error || 'Registration failed';
             responseEl.classList.add('error');
-            responseEl.classList.remove('success');
         }
     } catch (error) {
         responseEl.textContent = `Error: ${error.message}`;
         responseEl.classList.add('error');
-        responseEl.classList.remove('success');
     }
 });
 
-// Handle login
+// Login
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value;
@@ -55,31 +71,34 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const responseEl = document.getElementById('login-response');
 
     try {
-        const response = await fetch('/login', {
+        const response = await fetch('/api/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ username, password })
         });
         const data = await response.json();
+
         if (response.ok) {
             token = data.token;
             userRole = data.role;
+            localStorage.setItem('token', token);
+            localStorage.setItem('userRole', userRole);
             responseEl.textContent = 'Login successful!';
             responseEl.classList.add('success');
-            responseEl.classList.remove('error');
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('syscall-section').classList.remove('hidden');
             document.getElementById('user-role').textContent = `${username} (${userRole})`;
-            controlSyscallButtons(userRole);
+            loadSyscalls();
+            refreshLogs();
         } else {
-            responseEl.textContent = `Error: ${data.error}`;
+            responseEl.textContent = data.error || 'Login failed';
             responseEl.classList.add('error');
-            responseEl.classList.remove('success');
         }
     } catch (error) {
         responseEl.textContent = `Error: ${error.message}`;
         responseEl.classList.add('error');
-        responseEl.classList.remove('success');
     }
 });
 
@@ -87,123 +106,158 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 document.getElementById('logout-button').addEventListener('click', () => {
     token = null;
     userRole = null;
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
     document.getElementById('syscall-section').classList.add('hidden');
     document.getElementById('login-section').classList.remove('hidden');
-    document.getElementById('login-form').reset();
-    document.getElementById('login-response').textContent = '';
 });
 
-// Control visibility of syscall buttons based on role
-function controlSyscallButtons(role) {
-    document.getElementById('btn-read').style.display = 'inline-block';
-    document.getElementById('btn-write').style.display = role === 'admin' ? 'inline-block' : 'none';
-    document.getElementById('write-section').style.display = role === 'admin' ? 'block' : 'none';
-    document.getElementById('btn-delete').style.display = role === 'admin' ? 'inline-block' : 'none';
+// Load system calls
+async function loadSyscalls() {
+    try {
+        const response = await fetch('/api/syscalls', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const syscalls = await response.json();
+        const syscallItems = document.getElementById('syscall-items');
+        const syscallSelect = document.getElementById('syscall-select');
+
+        // Populate list
+        syscallItems.innerHTML = syscalls.map(sc => `
+            <div class="syscall-item">
+                <h4>${sc.name}</h4>
+                <p>${sc.description}</p>
+            </div>
+        `).join('');
+
+        // Populate dropdown
+        syscallSelect.innerHTML = '<option value="">Select a syscall</option>' +
+            syscalls.map(sc => `<option value="${sc.name}">${sc.name}</option>`).join('');
+    } catch (error) {
+        console.error('Error loading syscalls:', error);
+    }
 }
 
-// Write file syscall
-async function writeFile() {
-    const responseEl = document.getElementById('syscall-response');
-    const fileInput = document.getElementById('file-input');
-    const file = fileInput.files[0];
+// Dynamic form fields based on syscall
+document.getElementById('syscall-select').addEventListener('change', (e) => {
+    const syscall = e.target.value;
+    const paramsDiv = document.getElementById('syscall-params');
+    paramsDiv.innerHTML = '';
 
-    if (!file) {
-        responseEl.textContent = 'No file selected.';
-        responseEl.classList.add('error');
-        responseEl.classList.remove('success');
-        return;
+    if (syscall === 'open' || syscall === 'stat') {
+        paramsDiv.innerHTML = `
+            <label>Filename:</label>
+            <input type="text" id="param-filename" placeholder="e.g., /tmp/test.txt" required>
+        `;
+    } else if (syscall === 'read') {
+        paramsDiv.innerHTML = `
+            <label>File Descriptor:</label>
+            <input type="number" id="param-fd" placeholder="e.g., 3" required>
+            <label>Size:</label>
+            <input type="number" id="param-size" placeholder="e.g., 1024" required>
+        `;
+    } else if (syscall === 'write') {
+        paramsDiv.innerHTML = `
+            <label>File Descriptor:</label>
+            <input type="number" id="param-fd" placeholder="e.g., 3" required>
+            <label>Content:</label>
+            <textarea id="param-content" placeholder="Content to write" required></textarea>
+        `;
+    } else if (syscall === 'close') {
+        paramsDiv.innerHTML = `
+            <label>File Descriptor:</label>
+            <input type="number" id="param-fd" placeholder="e.g., 3" required>
+        `;
+    }
+});
+
+// Execute syscall
+document.getElementById('syscall-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const syscall = document.getElementById('syscall-select').value;
+    const responseEl = document.getElementById('syscall-response');
+    let params = {};
+
+    if (syscall === 'open' || syscall === 'stat') {
+        params.filename = document.getElementById('param-filename').value;
+    } else if (syscall === 'read') {
+        params.fd = document.getElementById('param-fd').value;
+        params.size = document.getElementById('param-size').value;
+    } else if (syscall === 'write') {
+        params.fd = document.getElementById('param-fd').value;
+        params.content = document.getElementById('param-content').value;
+    } else if (syscall === 'close') {
+        params.fd = document.getElementById('param-fd').value;
     }
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-        const fileContent = reader.result;
-
-        try {
-            const response = await fetch('/syscall/write_file', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ content: fileContent })
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                responseEl.textContent = `Success: ${JSON.stringify(data)}`;
-                responseEl.classList.add('success');
-                responseEl.classList.remove('error');
-            } else {
-                responseEl.textContent = `Error: ${data.error}`;
-                responseEl.classList.add('error');
-                responseEl.classList.remove('success');
-            }
-            refreshLogs();
-        } catch (error) {
-            responseEl.textContent = `Error: ${error.message}`;
-            responseEl.classList.add('error');
-            responseEl.classList.remove('success');
-        }
-    };
-    reader.readAsText(file);
-}
-
-// Generic syscall handler
-async function makeSyscall(syscallName) {
-    const responseEl = document.getElementById('syscall-response');
-
     try {
-        const response = await fetch(`/syscall/${syscallName}`, {
+        const response = await fetch('/api/execute', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
-            }
+            },
+            body: JSON.stringify({ syscall, params })
         });
         const data = await response.json();
 
         if (response.ok) {
-            responseEl.textContent = `Success: ${JSON.stringify(data)}`;
+            responseEl.textContent = `Success: ${JSON.stringify(data.result)}`;
             responseEl.classList.add('success');
             responseEl.classList.remove('error');
+            refreshLogs();
         } else {
             responseEl.textContent = `Error: ${data.error}`;
             responseEl.classList.add('error');
             responseEl.classList.remove('success');
         }
-        refreshLogs();
     } catch (error) {
         responseEl.textContent = `Error: ${error.message}`;
         responseEl.classList.add('error');
         responseEl.classList.remove('success');
     }
-}
+});
 
-// Refresh and filter logs
+// Refresh logs
 async function refreshLogs() {
-    const logsEl = document.getElementById('logs-output');
-    const filterUser = document.getElementById('filter-user').value.toLowerCase();
-    const filterSyscall = document.getElementById('filter-syscall').value.toLowerCase();
-
     try {
-        const response = await fetch('/logs', {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const response = await fetch('/api/logs', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
         });
-        const logs = await response.json();
-        console.log('Logs from server:', logs);  // Debug output
-        if (Array.isArray(logs)) {
-            const filteredLogs = logs.filter(log =>
-                (!filterUser || log.username.toLowerCase().includes(filterUser)) &&
-                (!filterSyscall || log.syscall.toLowerCase().includes(filterSyscall))
-            );
-            logsEl.textContent = filteredLogs.length > 0 
-                ? filteredLogs.map(log => `${log.timestamp} ${log.username} - ${log.syscall} (${log.status})`).join('\n')
-                : 'No matching logs found.';
-        } else {
-            logsEl.textContent = 'No logs available.';
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to fetch logs');
         }
+        
+        const logs = await response.json();
+        const logsContainer = document.getElementById('logs-output');
+        logsContainer.innerHTML = '';
+        
+        logs.forEach(log => {
+            const logElement = document.createElement('div');
+            logElement.className = 'log-entry';
+            logElement.innerHTML = `
+                <div class="log-header">
+                    <span class="log-username">${log.username}</span>
+                    <span class="log-syscall">${log.syscall}</span>
+                    <span class="log-timestamp">${new Date(log.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="log-content">
+                    <p><strong>Parameters:</strong> ${JSON.stringify(log.params)}</p>
+                    <p><strong>Result:</strong> ${log.result}</p>
+                </div>
+            `;
+            logsContainer.appendChild(logElement);
+        });
     } catch (error) {
-        logsEl.textContent = `Error fetching logs: ${error.message}`;
+        console.error('Error fetching logs:', error);
+        const logsContainer = document.getElementById('logs-output');
+        logsContainer.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
     }
 }
 
