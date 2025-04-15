@@ -2,8 +2,8 @@ from flask import request, jsonify
 from models import User
 
 permissions = {
-    "admin": ["read_file", "write_file", "delete_file"],
-    "user": ["read_file"]
+    "admin": ["open", "read", "write", "close", "getpid", "stat"],
+    "user": ["open", "read", "close", "getpid", "stat"]
 }
 
 def get_user_role(username):
@@ -15,5 +15,7 @@ def check_permission(syscall):
     role = get_user_role(username)
     allowed_syscalls = permissions.get(role, [])
     if syscall not in allowed_syscalls:
-        return False, jsonify({"error": f"Permission denied for {syscall}"}), 403
+        return False, jsonify({"error": f"Permission denied for {syscall}"})
     return True, None
+
+
