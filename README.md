@@ -1,6 +1,6 @@
 # Secure Syscall Interface
 
-The **Secure Syscall Interface** is a web-based application designed to provide a secure and user-friendly interface for managing system calls. It includes features such as user authentication, file operations, syscall execution, and logging. The project is built using a Python backend with a MySQL database and a responsive frontend.
+The **Secure Syscall Interface** is a web-based application designed to provide a secure and user-friendly interface for managing system calls. It includes features such as user authentication, file operations, syscall execution, and logging. The project is built using a Python backend with SQLite database and a responsive frontend.
 
 ---
 
@@ -12,31 +12,41 @@ The **Secure Syscall Interface** is a web-based application designed to provide 
 - **Role-Based Access**: The application supports role-based access control for different functionalities.
 
 ### 2. File Operations
-- **Read Files**: Users can specify a file name and read its content.
-- **Write Files**: Users can create new files and write content to them.
-- **Update Files**: Users can update the content of existing files.
-- **Delete Files**: Users can delete files they no longer need.
+- **Read Files**: Users can read file content using the read syscall.
+- **Write Files**: Users can write content to files using the write syscall.
+- **File Management**: Users can open and close files using the open and close syscalls.
+- **File Information**: Users can get file information using the stat syscall.
 
 ### 3. System Call Execution
-- **Syscall Explorer**: Users can view available system calls.
+- **Syscall Explorer**: Users can view available system calls including:
+  - `open`: Open a file
+  - `read`: Read from a file
+  - `write`: Write to a file
+  - `close`: Close a file
+  - `getpid`: Get process ID
+  - `stat`: Get file information
 - **Execute Syscalls**: Users can select a syscall, provide parameters, and execute it securely.
 - **Dynamic Parameters**: The interface dynamically adjusts based on the selected syscall's requirements.
 
 ### 4. Logging
-- **Syscall Logs**: All executed syscalls are logged with details such as username, syscall name, parameters, result, and timestamp.
-- **Filter Logs**: Users can filter logs by username or syscall name for easier analysis.
+- **Syscall Logs**: All executed syscalls are logged with details such as:
+  - Username
+  - Syscall name
+  - Parameters
+  - Result
+  - Timestamp
+- **Filter Logs**: Users can filter logs by username or syscall name.
 
 ### 5. Theme Toggle
-- A theme toggle button allows users to switch between light and dark modes for better usability.
+- A theme toggle button allows users to switch between light and dark modes.
 
 ---
 
 ## Prerequisites
 
 - Python 3.8 or higher
-- MySQL Server 8.0 or higher
+- SQLite (included with Python)
 - `pip` for installing Python dependencies
-- MySQL command-line tool for database setup
 - A modern web browser (e.g., Chrome, Firefox)
 
 ---
@@ -45,7 +55,7 @@ The **Secure Syscall Interface** is a web-based application designed to provide 
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/harshkr0011/Secure-Syscall-Interface
+   git clone https://github.com/your-repo/secure-syscall-interface.git
    cd secure-syscall-interface
    ```
 
@@ -54,18 +64,12 @@ The **Secure Syscall Interface** is a web-based application designed to provide 
    pip install -r requirements.txt
    ```
 
-3. **Set up the database**:
-   Run the `setup_database.sql` script in your MySQL server:
-   ```bash
-   mysql -u root -p < setup_database.sql
-   ```
-
-4. **Start the backend server**:
+3. **Start the application**:
    ```bash
    python app.py
    ```
 
-5. **Open the application**:
+4. **Open the application**:
    Navigate to `http://localhost:5000` in your browser.
 
 ---
@@ -78,7 +82,6 @@ The project is organized as follows:
 Secure Syscall Interface/
 │
 ├── app.py                    # Main Python backend application
-├── setup_database.sql        # SQL script to set up the database schema
 ├── requirements.txt          # Python dependencies
 │
 ├── static/                   # Frontend static files
@@ -86,13 +89,10 @@ Secure Syscall Interface/
 │   ├── styles.css            # CSS for styling the application
 │   ├── script.js             # JavaScript for frontend functionality
 │
-├── templates/                # Optional Flask templates folder
+├── templates/                # Flask templates folder
+│   └── index.html            # Main template file
 │
-├── data/                     # Folder for storing user-created files
-│   └── sample.txt            # Example file
-│
-└── logs/                     # Folder for storing application logs
-    └── app.log               # Log file for debugging and error tracking
+└── data/                     # Folder for storing user-created files
 ```
 
 ---
@@ -106,11 +106,11 @@ Secure Syscall Interface/
 
 2. **Login**:
    - Enter your username and password on the login page.
-   - Upon successful login, you’ll be redirected to the syscall explorer dashboard.
+   - Upon successful login, you'll be redirected to the syscall explorer dashboard.
 
 3. **File Operations**:
    - Use the file input field to specify a file name.
-   - Perform read, write, update, or delete operations as needed.
+   - Perform open, read, write, close, or stat operations as needed.
 
 4. **Execute Syscalls**:
    - Select a syscall from the dropdown menu.
@@ -126,7 +126,7 @@ Secure Syscall Interface/
 ## API Endpoints
 
 ### Authentication
-- **POST /register**
+- **POST /api/register**
   - **Description**: Registers a new user.
   - **Request Body**: 
     ```json
@@ -138,7 +138,7 @@ Secure Syscall Interface/
     ```
   - **Status**: 201 (Success), 400 (Invalid input)
 
-- **POST /login**
+- **POST /api/login**
   - **Description**: Authenticates a user.
   - **Request Body**: 
     ```json
@@ -150,45 +150,12 @@ Secure Syscall Interface/
     ```
   - **Status**: 200 (Success), 401 (Unauthorized)
 
-### File Operations
-- **GET /read-file?filename=string**
-  - **Description**: Reads the content of a specified file.
-  - **Response**: 
-    ```json
-    { "filename": "string", "content": "string" }
-    ```
-  - **Status**: 200 (Success), 404 (File not found)
-
-- **POST /write-file**
-  - **Description**: Writes content to a new file.
-  - **Request Body**: 
-    ```json
-    { "filename": "string", "content": "string" }
-    ```
-  - **Response**: 
-    ```json
-    { "message": "File written successfully" }
-    ```
-  - **Status**: 201 (Success), 400 (Invalid input)
-
-- **PUT /update-file**
-  - **Description**: Updates the content of an existing file.
-  - **Request Body**: 
-    ```json
-    { "filename": "string", "content": "string" }
-    ```
-  - **Response**: 
-    ```json
-    { "message": "File updated successfully" }
-    ```
-  - **Status**: 200 (Success), 404 (File not found)
-
 ### Syscall Management
 - **GET /api/syscalls**
   - **Description**: Fetches available syscalls.
   - **Response**: 
     ```json
-    { "syscalls": ["syscall1", "syscall2", ...] }
+    { "syscalls": ["open", "read", "write", "close", "getpid", "stat"] }
     ```
   - **Status**: 200 (Success)
 
@@ -196,21 +163,29 @@ Secure Syscall Interface/
   - **Description**: Executes a specified syscall.
   - **Request Body**: 
     ```json
-    { "syscall": "string", "parameters": ["string", ...] }
+    { "syscall": "string", "params": { "param1": "value1", ... } }
     ```
   - **Response**: 
     ```json
-    { "result": "string", "status": "success" }
+    { "result": "string" }
     ```
   - **Status**: 200 (Success), 400 (Invalid syscall)
+
+- **GET /api/logs**
+  - **Description**: Retrieves syscall logs.
+  - **Response**: 
+    ```json
+    { "logs": [{ "username": "string", "syscall": "string", "params": {}, "result": "string", "timestamp": "string" }] }
+    ```
+  - **Status**: 200 (Success)
 
 ---
 
 ## Security Considerations
 
-- **Syscall Execution**: Syscalls are executed in a restricted environment to prevent unauthorized access or system-level damage.
-- **Authentication**: Passwords are hashed using bcrypt before storage in the database.
-- **Input Validation**: All user inputs are sanitized to prevent SQL injection, XSS, and other common vulnerabilities.
+- **Syscall Execution**: Syscalls are executed in a restricted environment to prevent unauthorized access.
+- **Authentication**: Passwords are hashed using bcrypt before storage.
+- **Input Validation**: All user inputs are sanitized to prevent common vulnerabilities.
 - **Role-Based Access**: Admin users have elevated privileges, while regular users are restricted to safe operations.
 
 ---
@@ -220,39 +195,30 @@ Secure Syscall Interface/
 ### Common Issues
 - **Invalid Credentials**:
   - **Issue**: Login fails with an "Invalid credentials" error.
-  - **Solution**: Ensure the username and password are correct. Verify that the password is hashed correctly in the database.
-
-- **Database Connection Errors**:
-  - **Issue**: Application fails to connect to MySQL.
-  - **Solution**: Verify the database credentials in `app.py`. Ensure the MySQL server is running and accessible.
+  - **Solution**: Ensure the username and password are correct.
 
 - **File Descriptor Errors**:
   - **Issue**: File operations fail with descriptor errors.
-  - **Solution**: Ensure files are opened correctly before performing operations. Check file permissions in the `data/` folder.
+  - **Solution**: Ensure files are opened correctly before performing operations.
 
 - **Port Conflict**:
   - **Issue**: `http://localhost:5000` is not accessible.
-  - **Solution**: Check if another service is using port 5000. Change the port in `app.py` if needed (e.g., `app.run(port=5001)`).
-
-- **Dependency Issues**:
-  - **Issue**: Errors during `pip install -r requirements.txt`.
-  - **Solution**: Ensure compatibility with libraries like `libc` (especially on Windows). Use a virtual environment to isolate dependencies.
+  - **Solution**: Check if another service is using port 5000.
 
 ---
 
 ## Future Enhancements
 
-- Add support for more syscall types and parameter configurations.
-- Implement advanced role-based access control with granular permissions.
-- Improve logging with export options (e.g., CSV, JSON).
+- Add support for more syscall types.
+- Implement advanced role-based access control.
+- Improve logging with export options.
 - Add unit tests for backend and frontend components.
-- Integrate a CI/CD pipeline for automated testing and deployment.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ---
 
@@ -265,9 +231,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Acknowledgments
 
 - [Flask](https://flask.palletsprojects.com/) for the backend framework.
-- [MySQL](https://www.mysql.com/) for database management.
+- [SQLite](https://www.sqlite.org/) for database management.
 - Open-source libraries for additional functionality.
-
----
-
-This README provides a clear, professional, and comprehensive overview of the project. It includes all requested sections, improved formatting, and additional details to ensure developers and users can easily set up and understand the application. If you need further tweaks or additional sections, let me know!
