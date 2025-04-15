@@ -19,17 +19,29 @@ def register(username, password, role):
 
 def login():
     data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
+    if not data or not data.get('username') or not data.get('password'):
+        return jsonify({"error": "Username and password required"}), 400
+    
+    username = data.get('username')
+    password = data.get('password')
+    
     user = User.query.filter_by(username=username).first()
-    if user and check_password_hash(user.password, password):
-        token = jwt.encode({
-            "username": user.username,
-            "role": user.role,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-        }, SECRET_KEY)
-        return jsonify({"token": token, "role": user.role})
-    return jsonify({"error": "Invalid credentials"}), 401
+    if not user:
+        return jsonify({"error": "Invalid username or password"}), 401
+    
+    if not check_password_hash(user.password, password):
+        return jsonify({"error": "Invalid username or password"}), 401
+    
+    token = jwt.encode({
+        "username": user.username,
+        "role": user.role,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    }, SECRET_KEY, algorithm="HS256")
+    
+    return jsonify({
+        "token": token,
+        "role": user.role
+    })
 
 def token_required(f):
     def decorator(*args, **kwargs):
