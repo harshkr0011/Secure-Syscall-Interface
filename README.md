@@ -45,7 +45,7 @@ The **Secure Syscall Interface** is a web-based application designed to provide 
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-repo/secure-syscall-interface.git
+   git clone https://github.com/harshkr0011/Secure-Syscall-Interface
    cd secure-syscall-interface
    ```
 
