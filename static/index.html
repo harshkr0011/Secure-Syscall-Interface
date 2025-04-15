@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Syscall Interface</title>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="theme-toggle" onclick="toggleTheme()"></div>
     <header class="header">
         <h1>Secure Syscall Interface</h1>
     </header>
@@ -50,23 +51,34 @@
             <p id="register-response" class="response"></p>
         </section>
 
-        <!-- Syscall Section -->
+        <!-- Syscall Explorer Section -->
         <section id="syscall-section" class="card hidden">
-            <h2>System Calls</h2>
+            <h2>System Call Explorer</h2>
             <div class="user-info">
                 <p>Logged in as: <span id="user-role"></span></p>
                 <button id="logout-button" class="btn btn-danger">Logout</button>
             </div>
-            <div id="syscall-buttons" class="button-group">
-                <button id="btn-read" onclick="makeSyscall('read_file')" class="btn btn-secondary">Read File</button>
-                <div id="write-section" class="write-section">
-                    <input type="file" id="file-input" class="file-input">
-                    <button id="btn-write" onclick="writeFile()" class="btn btn-secondary">Write File</button>
-                </div>
-                <button id="btn-delete" onclick="makeSyscall('delete_file')" class="btn btn-secondary">Delete File</button>
+
+            <!-- Available Syscalls -->
+            <div class="syscall-list-section">
+                <h3>Available System Calls</h3>
+                <div id="syscall-items" class="syscall-list"></div>
             </div>
-            <div id="spinner" class="spinner hidden">Loading...</div>
-            <p id="syscall-response" class="response"></p>
+
+            <!-- Execute Syscall -->
+            <div class="execute-syscall-section">
+                <h3>Execute System Call</h3>
+                <form id="syscall-form" class="form">
+                    <div class="input-group">
+                        <select id="syscall-select" required>
+                            <option value="">Select a syscall</option>
+                        </select>
+                    </div>
+                    <div id="syscall-params" class="params-group"></div>
+                    <button type="submit" class="btn btn-primary">Execute</button>
+                </form>
+                <div id="syscall-response" class="response"></div>
+            </div>
         </section>
 
         <!-- Logs Section -->
@@ -81,6 +93,6 @@
         </section>
     </main>
 
-    <script src="/script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
