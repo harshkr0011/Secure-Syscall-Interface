@@ -224,7 +224,7 @@ This project is licensed under the MIT License.
 
 ## Contributors
 
-- Rakul - Developer
+- Harsh Kumar, Aditya Gupta and Prakhar Mishra - Developer
 
 ---
 
